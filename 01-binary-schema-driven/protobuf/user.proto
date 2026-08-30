@@ -1,0 +1,52 @@
+// user.proto — the CONTRACT. Both producer and consumer compile this file.
+//
+// Evolution rules that keep old and new services compatible:
+//   1. NEVER change or reuse a field number once shipped.
+//   2. Only ADD fields (with new numbers); never repurpose existing ones.
+//   3. When you delete a field, `reserve` its number and name forever.
+syntax = "proto3";
+
+package learning.serialization;
+
+message User {
+  // Field numbers 1-15 encode in a single byte — use them for hot fields.
+  int64  id       = 1;
+  string username = 2;
+  string email    = 3;
+  bool   active   = 4;
+
+  // Enums must start at 0 in proto3 (0 is also the implicit default).
+  enum Role {
+    ROLE_UNSPECIFIED = 0;
+    VIEWER           = 1;
+    EDITOR           = 2;
+    ADMIN            = 3;
+  }
+  Role role = 5;
+
+  // Nested message — serialized as a length-delimited sub-record.
+  message Address {
+    string street  = 1;
+    string city    = 2;
+    string country = 3;
+    string zip     = 4;
+  }
+  Address address = 6;
+
+  // repeated = a list; packed encoding makes numeric lists very compact.
+  repeated string tags = 7;
+
+  // Unix epoch millis. (Real projects often use google.protobuf.Timestamp.)
+  int64 created_at_ms = 8;
+
+  // Field 9 once held "nickname"; it was removed. Reserving it prevents a
+  // future teammate from reusing the number with a different meaning —
+  // which would silently corrupt decoding of old payloads.
+  reserved 9;
+  reserved "nickname";
+}
+
+// A batch wrapper, e.g. one Kafka record carrying several users.
+message UserBatch {
+  repeated User users = 1;
+}

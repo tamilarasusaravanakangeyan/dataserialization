@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/user.schema.json",
+  "title": "User",
+  "description": "A user record accepted by the /users REST endpoint.",
+  "type": "object",
+  "required": ["id", "username", "email", "role"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Positive numeric identifier."
+    },
+    "username": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 30,
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Lowercase letters, digits, underscores."
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "role": {
+      "enum": ["viewer", "editor", "admin"]
+    },
+    "address": {
+      "$ref": "#/$defs/address"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "maxItems": 10,
+      "uniqueItems": true
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "admin_note": {
+      "type": "string",
+      "description": "Only admins may carry an admin_note (see if/then rule)."
+    }
+  },
+  "$defs": {
+    "address": {
+      "type": "object",
+      "required": ["city", "country"],
+      "properties": {
+        "street":  { "type": "string" },
+        "city":    { "type": "string", "minLength": 1 },
+        "country": { "type": "string", "pattern": "^[A-Z]{2}$" },
+        "zip":     { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "if": {
+    "properties": { "role": { "const": "admin" } },
+    "required": ["role"]
+  },
+  "else": {
+    "not": { "required": ["admin_note"] }
+  }
+}
